@@ -1,0 +1,115 @@
+\chapter{README}
+
+章タイトルのデザインは quotchap パッケージ\footnote{\url{https://ctan.org/pkg/quotchap}}のパクリ。
+
+\section{執筆のしかた}
+
+このリポジトリを \verb`git clone` したら、\verb`*.tex` をてきとーに編集して、\verb`make` するだけ。
+
+必要に応じて、\verb`git remote remove origin` してから自前のリポジトリに `git remote add origin ...` しなおすべし。
+
+\subsection{\LaTeX 環境}
+
+LuaLaTeX + jlreq が必要。TeXLive で動くはず。
+
+docker で構築するのが楽ちん。
+
+\begin{lstlisting}[style=tty]
+% docker pull texlive/texlive:latest
+\end{lstlisting}
+
+docker を使わない場合は \verb`Makefile` の \verb`LATEXMK=...` の行を修正する必要がある。
+
+\begin{lstlisting}
+# docker を使う場合
+LATEXMK= docker run --rm -v .:/workdir texlive/texlive:latest latexmk
+# 使わない場合
+#LATEXMK= latexmk
+# ローカルではdockerを使わないが、github actions でコンパイルするときには使う
+#LATEXMK= $(shell command -v latexmk || echo "docker run --rm -v .:/workdir texlive/texlive:latest latexmk")
+\end{lstlisting}
+
+\subsection{コンパイル}
+
+\verb`make` 一発。
+
+\verb`Makefile` をとくに修正していない場合、電子版(画面上での閲覧を想定したPDF)の \verb`main.pdf` を生成する。また、\verb`make all` ではそれに加えて印刷版(印刷所への入稿を想定したPDF)の \verb`print.pdf` を生成する。コンパイルのたびに両方生成するのは時間のムダなので、デフォルトではあえて片方だけ生成するようにしている。
+
+2種類のPDFを生成するが、電子版、印刷版どちらに対する変更も \verb`main.tex` に対しておこなう。\verb`print.tex` は電子版か印刷版かを区別するためのマクロを定義してから \verb`main.tex` を読み込むだけのファイルで、通常はとくに修正する必要はない。
+
+以下のように記述すると電子版、印刷版で処理を切り替えられる。
+
+\begin{lstlisting}
+\ifdefined\PRINT
+  % 印刷版の処理
+\else
+  % 電子版の処理
+\fi
+\end{lstlisting}
+
+\verb`make` の際、\verb`git` のコミットハッシュが記載された \verb`revid.tex` というファイルを自動で生成する。この値は \verb`\revid` というマクロで参照できる。本ドキュメントでは奥付で使用している。また、PDFのメタ情報にも埋め込んでいる。
+
+\begin{lstlisting}[style=tty]
+% git rev-parse --short main
+1eb445e
+% cat revid.tex
+\def\revid{1eb445e}
+% pdfinfo -meta main.pdf | fgrep VersionID
+                  <pdfaProperty:name>VersionID</pdfaProperty:name>
+      <xmpMM:VersionID>1eb445e</xmpMM:VersionID>
+\end{lstlisting}
+
+\subsection{github workflow}
+
+\verb`main` または \verb`master` ブランチで github に push すると、github 上で \verb`make all` される。docker を使わずにコンパイルするように \verb`Makefile` の \verb`LATEXMK=...` の行を修正していた場合、github でのビルドがコケるので注意。
+
+自動コンパイルしたくない場合は \verb`.github/` 以下をまるごと削除すべし。
+
+\section{セクション}
+
+ここからは見た目を確認するためのデモ。
+
+\subsection{サブセクション}
+
+びよーん。
+
+\subsubsection{サブサブセクション}
+
+ぱおーん。
+
+\begin{column}{コラムタイトル}
+
+コラムはこう書く\footnote{コラム内で脚注を書くとこうなる}。
+
+目次にも自動的に掲載される。
+
+\end{column}
+
+ソースコードはリスト\ref{src}のように書く。
+
+\begin{lstlisting}[caption=hello.sh, label=src]
+echo Hello, world!
+\end{lstlisting}
+
+実行するとこうなる。
+
+\begin{lstlisting}[style=tty]
+$ sh hello.sh
+Hello, world!
+\end{lstlisting}
+
+
+以下は \verb`framed` パッケージで提供されていた環境を \verb`tcolorbox` でそれっぽく作ったもの。
+
+なんか引用文を入れるのによさそうな環境。えらい人曰く、
+
+\begin{leftbar}
+腹へった。
+\end{leftbar}
+
+用途不明だけどなんか枠。
+
+\begin{snugshade}
+グレーの箱。
+\end{snugshade}
+

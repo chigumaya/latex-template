@@ -1,0 +1,398 @@
+% docker run --rm -v $PWD:/workdir texlive/texlive:latest lualatex main.tex
+
+\input{revid}
+
+% PDFに日付などの情報を埋め込まない = コンパイルするたびに同じPDFが出力される
+% これとは別に、hyperxmp パッケージも無効化するか、または環境変数SOURCE_DATE_EPOCHで
+% 適当な時刻(epochからの経過秒)を指定する必要がある
+% 32(CreationDate)+64(ModDate)+512(trailer ID)=608
+%\pdfvariable suppressoptionalinfo 608
+
+\ifdefined\PRINT
+  \documentclass[book,
+    fontsize=9pt, paper=a5paper, line_length=37zw, openany,
+    twoside, gutter=22mm,% 印刷版: 両面、ノド側余白大きめ
+  ]{jlreq}
+\else
+  \documentclass[book,
+    fontsize=9pt, paper=a5paper, line_length=37zw, openany,
+    oneside, % 電子版: 片面
+  ]{jlreq}
+\fi
+
+\usepackage[haranoaji,       % 原の味フォントを使う
+            no-math,         % 数式関連フォントはいじらない
+            deluxe,          % 使えるウェイトを増やす
+            expert,          % ルビなどで専用仮名フォントを使う
+            match,           % \ttfamilyや\sffamilyで和文フォントをゴシックに
+            jfm_yoko=jlreq,  % japanese font metric (よくわからんがおまじない)
+]{luatexja-preset}
+\usepackage[match]{luatexja-fontspec}
+\ifdefined\PRINT
+  \usepackage[gray]{xcolor}  % 印刷版ではグレースケール
+  \usepackage{jlreq-trimmarks}% トンボあり
+\else
+  \usepackage{xcolor}        % カラー
+\fi
+\usepackage{graphicx}        % includegraphics
+\usepackage[most]{tcolorbox} % コラムなど
+\usepackage{tikz}            % 描画
+\usepackage{amsmath}         % align*
+\usepackage{listings}        % ソースコード
+\usepackage{tabularray}      % tblr環境
+\usepackage{tablefootnote}   % 表内で脚注
+\usepackage{multicol}        % 指定箇所だけ段組
+\usepackage{wrapfig2}        % 図のまわりこみ
+\usepackage{wallpaper}       % 表紙用
+\usepackage{fontawesome7}    % アイコンフォント
+\usepackage{qrcode}          % QRコード画像生成
+\usepackage{eso-pic}         % 全ページに背景描画（隠しノンブル用）
+\usepackage{pageslts}        % 通しページ番号(隠しノンブル用だけど電子版でも必要)
+% PDF出力で \ref から \label にハイパーリンク/ \urlコマンド
+% けっこうな数のコマンドを上書き定義しているので最後に読みこむのが推奨らしい
+\usepackage[pdfusetitle]{hyperref}
+\usepackage{hyperxmp}        % PDFメタデータ埋め込み/ hyperref のさらに後
+
+% デフォの\sffamilyのフォントが日本語とマッチしてないので変更
+\setsansfont{TeX Gyre Heros}
+% ttfamily のデフォは 0/O、1/l/I の区別がつきづらい
+%\setmonofont{DejaVu Sans Mono}
+
+\ifdefined\PRINT
+  % ページスタイル(jlreq専用) / 印刷版
+  % 柱、ノンブルあり
+  \NewPageStyle{body}{
+    nombre_position=bottom-fore-edge, % ノンブル位置: 小口側下部
+    nombre_font=\sffamily,
+    running_head_position=top-fore-edge,% 柱位置: 小口側上部
+    even_running_head={_chapter},  % 柱/左
+    odd_running_head={_section},   % 柱/右
+    mark_format={_chapter={第\thechapter 章\quad #1}, _section={\thesection\quad #1}}
+  }
+  % ノンブルのみ、柱なし
+  \NewPageStyle{frontbackmatter}{
+    nombre_position=bottom-fore-edge,
+    nombre_font=\sffamily,
+  }
+\else
+  % ページスタイル(jlreq専用) / 電子版
+  % 柱、ノンブルあり
+  \NewPageStyle{body}{
+    nombre_position=bottom-center,% 下部中央
+    nombre_font=\sffamily,
+    odd_running_head={_chapter},% 柱: onesideではoddのみ有効っぽい
+    mark_format={_chapter={第\thechapter 章\quad #1}}
+  }
+  % ノンブルのみ、柱なし
+  \NewPageStyle{frontbackmatter}{
+    nombre_position=bottom-center,
+    nombre_font=\sffamily,
+  }
+\fi
+% 本文ページスタイル(jlreqsetupで設定しても効かない？)
+\pagestyle{body}
+
+\jlreqsetup{
+  frontmatter_pagestyle={frontbackmatter},
+  mainmatter_pagebreak=clearpage, % \mainmatterで空白ページを挿入しない
+  backmatter_pagestyle={frontbackmatter},
+  % front/backmatter では章タイトル前後の余白を減らす/章番号を出力しない
+  frontmatter_heading={ chapter={ before_lines=0, after_lines=0, number=false,},},
+  mainmatter_heading={ chapter={ before_lines=*7, after_lines=3,},},
+  backmatter_heading={ chapter={ before_lines=0, after_lines=0, number=false},},
+}
+
+% ページ通し番号(pagesLTS)
+% \thepage は i,ii,iii,1,2,3,4,... となるので使わない
+\pagenumbering{arabic}
+% 文字列を1文字ずつ縦に並べる
+% 要expl3; 現行lualatex/(u)platexなら動くはず(古いlatexエンジンでは動かないかも)
+\ExplSyntaxOn
+\NewDocumentCommand{\verticaltext}{O{1em}m}
+  {
+    \vbox{
+      \hsize=#1
+      \parindent=0pt
+      \centering
+      \tl_set:Nx \l_tmpa_tl {#2}
+      \tl_map_inline:Nn \l_tmpa_tl
+        {
+          \hbox to #1{\hfil ##1\hfil}\par
+        }
+    }
+  }
+\ExplSyntaxOff
+% 隠しノンブル
+% ノド側(奇数ページは左、偶数ページは右）のページ端中央に配置
+% 横組専用(縦組では左右が入れ替わるので位置調整が必要)
+% 版面が用紙原点から1インチ内側に配置される前提(jlreq-trimmarksのデフォルト)
+% jlreq-trimmmarksのオプションを変更したり、別の方法でトンボを出力したりするとズレる
+% pagestyleとは独立しているので \thispagestyle{empty} でも出力される
+% なんでこんな基本的なものを自前で実装せにゃならんのだ…
+\ifdefined\PRINT
+  \makeatletter
+  \newcommand*{\ptlen}[1]{\strip@pt#1}
+  \AddToShipoutPictureFG{%
+    \begingroup
+    \ttfamily\fontsize{6pt}{6pt}\selectfont
+    \ifodd\value{page}% 奇数ページ(右ページ)
+      \put(
+        \ptlen\dimexpr 1in+1mm\relax,% ノド(左)から1mm内側
+        \ptlen\dimexpr 1in+\paperheight/4\relax% 高さ中央(なぜ/2ではなく/4なのかわからん)
+      ){% 背景に濃色の画像がある場合でもノンブルが読めるように数字の背景を白く塗り潰す
+        {\setlength{\fboxsep}{0.5pt}\colorbox{white}{\verticaltext[3pt]{\theCurrentPage}}}%
+      }%
+    \else% 偶数ページ(左ページ)
+      \put(
+        \ptlen\dimexpr 1in+\paperwidth-1mm-1.4mm\relax,% ノド(右)から1mm+ノンブル幅(雑に1.4mmぐらい)内側
+        \ptlen\dimexpr 1in+\paperheight/4\relax% 高さ中央
+      ){%
+        {\setlength{\fboxsep}{0.5pt}\colorbox{white}{\verticaltext[3pt]{\theCurrentPage}}}%
+      }%
+    \fi
+    \endgroup
+  }
+  \makeatother
+  % 裁ち切り線の外に出力されるバナーにもノンブルを追加
+  % CurrentPage は実際のページ番号より1だけ進んだ値になっているので-1する
+  \jlreqtrimmarkssetup{
+    banner={
+      top-left={
+        yoko={page=\number\numexpr\value{CurrentPage}-1 \quad revid=\revid \quad jobname=\jobname},
+      },
+    },
+  }
+\fi
+
+\definecolor{shadecolor}{gray}{0.9}  % snugshade環境その他
+
+\definecolor{chaptergrey}{gray}{0.6} % 章番号
+\newfontfamily{\chapnumfamily}{TeX Gyre Schola}
+\newcommand{\chapnumfont}{\chapnumfamily\fontsize{100}{130}\selectfont\color{chaptergrey}\bfseries}
+
+% 見出しの定義
+% chapter; quotchap パッケージの模倣
+\ModifyHeading{chapter}{
+  pagestyle=frontbackmatter,% ノンブルのみ、柱なし
+  font={},
+  align=right,
+  lines=7,         % 7行取りの中央に見出しを配置
+  %before_lines=*7,% 見出し前後の空行(*7は改ページ直後でも強制的に7行空ける)
+  %after_lines=3,  % \jlreqsetupで指定するのでコメントアウト
+  after_label_space=0pt,
+  second_heading_text_indent={*0pt},
+  subtitle_indent={*0pt},
+  format={% #1だと「第1章」になるので \thechapterで「1」だけ出力する
+    \jlreqHeadingLabel{{\chapnumfont \thechapter\par\nobreak}}%
+    {\huge\bfseries\raggedleft #2\par}%
+  },%
+}
+% section; L字
+\definecolor{sectionbar}{gray}{0.30}
+\ModifyHeading{section}{
+  font={\sffamily\bfseries\Large},
+  label_format={\thesection},
+  indent=0pt,% 行頭のアキ
+  after_label_space=1em,% ラベルとタイトルの間のアキ
+  second_heading_text_indent=0pt,
+  lines=3,         % 見出しの高さ(ぜんぶで3行分の高さ)
+  after_space=14pt,% 見出し後の空き
+  format={%
+    \noindent
+    \begin{picture}(0,0)
+      \put(0,-5){%
+        \begin{tikzpicture}
+          \fill[sectionbar] (0pt,0pt) rectangle (5pt,19pt);
+        \end{tikzpicture}
+      }
+      \put(0,-5){%
+        \color{sectionbar}
+        \line(1,0){\dimexpr\hsize\relax}
+      }
+    \end{picture}%
+    \hskip 1em
+    #1#2%
+  }%
+ }
+% subsection; 下線のみ
+\ModifyHeading{subsection}{
+  font={\large\sffamily\bfseries},
+  label_format={\thesubsection},
+  indent=0pt,
+  after_label_space=1em,
+  second_heading_text_indent=0pt,
+  lines=2,
+  after_space=8pt,
+  format={%
+    \noindent #1#2\par\nobreak
+    \vskip2pt
+    {\color{sectionbar}\hrule height 0.6pt depth0pt width\hsize}%
+  }%
+}
+% subsubsection; 番号のかわりにアイコンを付加
+\ModifyHeading{subsubsection}{
+  number=false,
+  font={\sffamily\bfseries},
+  indent=0pt,
+  lines=1,
+  second_heading_text_indent=0pt,
+  format={\noindent\faIcon{book}\quad #2}%
+}
+
+% 図表見出し
+\renewcommand{\tablename}{\textcolor{gray}{▼} 表}
+\renewcommand{\figurename}{\textcolor{gray}{▲} 図}
+\renewcommand{\lstlistingname}{\textcolor{gray}{▼} リスト}
+
+% ソースコード
+\lstset{
+%  language = bash,		% 言語
+  backgroundcolor={\color[gray]{.90}},	%背景色と透過度
+  breaklines = true,		%枠外に行った時の自動改行
+  breakindent = 0pt,		%自動改行後のインデント量(デフォルトでは20[pt])	
+  %basicstyle = \ttfamily\footnotesize,		% 標準の書体
+  basicstyle = \ttfamily\small,		% 標準の書体
+  %commentstyle = {\itshape \color[cmyk]{1,0.4,1,0}},	%コメントの書体
+  %commentstyle = \ttfamily,
+  classoffset = 0,		%関数名等の色の設定
+  %keywordstyle = {\bfseries \color[cmyk]{0,1,0,0}},	%キーワード(int, ifなど)の書体
+  %keywordstyle = {\bfseries},
+  stringstyle = \ttfamily,
+  showstringspaces=false,
+  frame = tBRl,	%枠 "t"は上に線を記載, "T"は上に二重線を記載
+		%他オプション：leftline，topline，bottomline，lines，single，shadowbox
+  framesep = 5pt,	%枠と内部の文字の間隔
+  numbers = left,	%行番号の位置
+  numbersep = 9pt,     %枠と行番号の間隔
+  stepnumber = 1,	%行番号の間隔
+  numberstyle = \tiny,	%行番号の書体
+  tabsize = 8,		%タブの大きさ
+  basewidth = 0.5em,	%字送り
+  captionpos = t	%キャプションの場所("tb"ならば上下両方に記載)
+}
+
+% 実行結果表示用(上の設定からの差分のみ)
+\lstdefinestyle{tty}{
+  basicstyle = \ttfamily\footnotesize,
+  frame= {},
+  framesep = 3pt,
+  numbersep = 5pt,
+}
+
+% コラム(tcolorbox)
+\definecolor{columnframe}{gray}{0.40}
+\DeclareTColorBox{column}{m}{
+  title={\faIcon{comment-dots}\quad #1},
+  fonttitle=\sffamily,
+  breakable, % コラム内で改ページできるようにする
+  before upper={ % 本文直前に挿入されるコード
+    \setlength{\parindent}{1\zw}% 最初の段落で字下げする(デフォではされない)
+  },
+  before={ % 箱の直前に挿入されるコード
+    \vspace{\baselineskip}
+    \phantomsection% hyperrefの被リンク用ダミーセクションを作る
+    \addcontentsline{toc}{section}{\numberline{\faIcon[regular]{comment-dots}}#1}%目次に載せる
+  },
+  colframe=columnframe, % 上の方で\definecolor した色
+  boxrule=0.5pt,
+  arc=1.5mm,
+  enhanced, % underlayでいろいろできるようにする
+  underlay unbroken={ % 1ページに収まる場合
+    \draw[line width=0.5pt, rounded corners=1.5mm]
+      (frame.north west) rectangle (frame.south east);
+  },
+  underlay first={ % 分割された最初のパーツ
+    \draw[line width=0.5pt, rounded corners=1.5mm]
+      (frame.south west) -- (frame.north west) -- (frame.north east) -- (frame.south east);
+  },
+  underlay middle={ % 分割された途中のパーツ(使わない)
+    \draw[line width=0.5pt] (frame.north west) -- (frame.south west);
+    \draw[line width=0.5pt] (frame.north east) -- (frame.south east);
+  },
+  underlay last={ % 分割された最後のパーツ
+    \draw[line width=0.5pt, rounded corners=1.5mm]
+      (frame.north west) -- (frame.south west) -- (frame.south east) -- (frame.north east);
+  },
+}
+
+% framed package に含まれる snugshade, leftbar 環境に似せたもの(完全には同じではない)
+\DeclareTColorBox{snugshade}{}{
+  breakable,
+  before upper={ % 本文直前に挿入されるコード
+    \setlength{\parindent}{1\zw}% 最初の段落で字下げする(デフォではされない)
+  },
+  width=\linewidth,
+  top=2pt,bottom=2pt,left=2pt,right=2pt,
+  colframe=shadecolor,
+  colback=shadecolor,
+  boxrule=0pt, arc=0pt,
+}
+\DeclareTColorBox{leftbar}{}{
+  breakable,
+  before upper={ % 本文直前に挿入されるコード
+    \setlength{\parindent}{1\zw}% 最初の段落で字下げする(デフォではされない)
+  },
+  width=\linewidth,
+  top=2pt,bottom=2pt,left=8pt,right=2pt,
+  colframe=white,
+  colback=white,
+  boxrule=0pt,  arc=0pt,
+  enhanced,
+  underlay={
+    \draw[black, line width=2pt](frame.north west) -- (frame.south west);
+  },
+}
+
+% tcolorbox の中で \footnote を使うと、番号が1),2),3),...ではなくa,b,c,...になる
+% これを *),  \dagger), \ddagger),... になるように変更
+% mpfootnote は minipage 環境用のカウンタらしい
+\renewcommand{\thempfootnote}{\fnsymbol{mpfootnote})}
+
+% ハイフネーションルール
+% デフォだとin-odeのように区切られちゃう
+\hyphenation{i-node}
+
+\title{かっこいいタイトル}
+\author{何野誰某}
+\date{YYYY/MM/DD}
+
+% その他の hyperref 設定
+\hypersetup{
+% luatex,% 自動検出されるので不要
+% unicode=true,% これもデフォなので不要
+% pdfusetitle,% \title, \author を埋め込む(\usepackageでの指定が必須なのでここではコメントアウト)
+  bookmarks=true, % 見出し
+  bookmarksdepth=2,  % デフォではtocdepthと同じ値だけどいちおう
+  hidelinks, % リンクに色・枠をつけない
+%  pdfkeywords={key, word},
+%  pdfsubject={pdf subject},% titleとは別っぽい
+  pdflang=ja-JP,
+  % 以下、hyperxmp
+%  keeppdfinfo,% メタ情報を dc:hoge だけでなくInfo dictにも出力する
+%  pdfcontactemail={mail@address},
+%  pdfcontacturl={https://example.com/},
+  pdfversionid=\revid,
+%  pdfdate={1970-01-01},
+}
+
+\begin{document}
+
+\frontmatter
+\maketitle
+% 序文
+\include{intro}
+% 目次(subsectionまで)
+\setcounter{tocdepth}{2}
+\tableofcontents
+
+% 本文
+\mainmatter
+\include{chapter1}
+%\include{chapter2}
+%\include{chapter3}
+
+% あとがき・奥付
+\backmatter
+\include{outro}
+
+\end{document}

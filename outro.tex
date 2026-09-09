@@ -1,0 +1,62 @@
+\chapter{あとがき}
+
+本文と関係ないことで無駄に1ページを費すことに対する反省の弁。
+
+
+\clearpage
+\thispagestyle{empty}
+% ここから下は、かなり雑にレイアウトしてるので適宜修正すべし。
+
+\begin{flushleft}
+{\LARGE\faIcon{pen-to-square}}\quad{\large\sffamily 著者紹介}
+
+\vspace{0.5\baselineskip}
+{\sffamily{}何野誰某}
+\vspace{0.3\baselineskip}
+
+そのへんのおっさん。
+\end{flushleft}
+
+\vspace{1\baselineskip}% QRコードの周囲にほとんど空白が空かないので手で調整する
+\begin{tblr}{cc}
+\qrcode[height=2cm]{https://x.com/example_account} &
+\qrcode[height=2cm]{https://example.com} \\
+\href{https://x.com/example_account}{\faIcon{square-x-twitter} \ttfamily@example\_account} &
+\url{https://example.com}
+\end{tblr}
+\vspace{1\baselineskip}
+
+
+
+% 奥付は偶数ページに載せる
+% (偶数ページなら改ページせず著者紹介の下のスペースに、奇数ページなら改ページ)
+\makeatletter
+\ifodd\c@CurrentPage
+  \clearpage\thispagestyle{empty}
+\fi
+\makeatother
+\null
+\vfill
+
+% 奥付本体
+\begin{center}
+\parbox{25\zw}{
+{\large\sffamily{}かっこいいタイトル}
+\vspace*{0.5\zh}
+\hrule height 1pt % 太さ1pt横幅いっぱいの線
+\vspace*{1\zh}
+YYYY年MM月DD日 初版第1刷
+\vspace*{1\zh}
+\begin{center}
+\begin{tblr}{ll}
+著者 & 何野誰某 \\
+発行 & Foobar Publisher \\
+e-mail & \texttt{mail@address} \\
+印刷 & ほげほげ印刷 \\
+\end{tblr}
+\end{center}
+\vspace*{1\zh}
+\hrule height 0.4pt
+\null\hfill{\ttfamily rev. \revid}
+}% end \parbox
+\end{center}
