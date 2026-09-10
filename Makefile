@@ -15,14 +15,14 @@ print.pdf: print.tex $(SRC) $(INCLUDE) revid.tex
 
 revid.tex::
 	echo '\\def\\revid{$(REVID)}' > tmp.$@
-	cmp tmp.$@ $@ && rm tmp.$@ || mv tmp.$@ $@
+	cmp tmp.$@ $@ 2>/dev/null && rm tmp.$@ || mv tmp.$@ $@
 
 .PHONY: all main print clean $(SUBDIRS)
 $(SUBDIRS):
 	make -C $@
 clean:
-	$(LATEXMK) -C
 	rm revid.tex
+	$(LATEXMK) -C
 
 .SUFFIXES: .tex .pdf
 .tex.pdf:
