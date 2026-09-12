@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 1540 2160" width="100%" height="100%">
+  <defs>
+    <marker id="arrow" viewBox="-10 0 20 20" refX="10" refY="10" markerWidth="12" markerHeight="12" orient="auto-start-reverse">
+      <path d="M -10 0 l 20 10 l -20 10 z" />
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="100%" height="100%" fill="#fff6c3"/>
+  <rect x="30" y="30" width="1480" height="2100" stroke="gray" stroke-width="3" fill="none"/>
+  <g stroke="black" marker-start="url(#arrow)" marker-end="url(#arrow)">
+    <path d="M30 2080 h1480"/>
+    <path d="M1460 30 v2100"/>
+    <path d="M1460 2130 v30"/>
+    <path d="M1510 2080 h30"/>
+  </g>
+  <text x="1060" y="2070" style="font: 20pt sans-serif;">A5横 148mm / B5横 182mm</text>
+  <text x="1455" y="2035" style="font: 20pt sans-serif;" transform="rotate(270 1455 2035)">A5縦 210mm / B5縦 257mm</text>
+  <text x="1220" y="2155" style="font: 20pt sans-serif;">塗り足し幅 3mm</text>
+  <text x="1535" y="2035" style="font: 20pt sans-serif;" transform="rotate(270 1535 2035)">塗り足し幅 3mm</text>
+  <text x="470" y="600" style="font: 50pt sans-serif;" fill="black">かっこいいタイトル</text>
+  <text x="850" y="800" style="font: 40pt sans-serif;" fill="black">何野誰某</text>
+</svg>

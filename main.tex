@@ -1,10 +1,26 @@
 % docker run --rm -v $PWD:/workdir texlive/texlive:latest lualatex main.tex
 
+% 印刷版ではPDF/X-4を生成する
+% JapanColor2011Coated.icc はここから取得 → https://japancolor.jp/icc.html
+% PDF/X-4と主張するファイルを出力するが、本当に準拠できてるかはまた別の問題
+% 確認できないのでとりあえずコメントアウト
+%\ifdefined\PRINT
+%  \RequirePackage{pdfmanagement}
+%  \SetKeys[document/metadata]{
+%    lang=ja-JP,
+%    pdfversion=1.6,
+%    pdfstandard=X-4,
+%    colorprofiles={X=JapanColor2011Coated.icc},
+%  }
+%\fi
+% 最新の方法では \DocumentMetadata{pdfversion=1.6, pdfstandard=X-4,} と
+% するようだが、jlreq との組み合わせではエラーになる
+
 \input{revid}
 
 % PDFに日付などの情報を埋め込まない = コンパイルするたびに同じPDFが出力される
-% これとは別に、hyperxmp パッケージも無効化するか、または環境変数SOURCE_DATE_EPOCHで
-% 適当な時刻(epochからの経過秒)を指定する必要がある
+% これだけでなく、hyperxmp パッケージも無効化するか、または環境変数SOURCE_DATE_EPOCHで
+% 適当な時刻(epochからの経過秒)も合わせて指定する必要がある
 % 32(CreationDate)+64(ModDate)+512(trailer ID)=608
 %\pdfvariable suppressoptionalinfo 608
 
@@ -29,10 +45,11 @@
 ]{luatexja-preset}
 \usepackage[match]{luatexja-fontspec}
 \ifdefined\PRINT
-  \usepackage[gray]{xcolor}  % 印刷版ではグレースケール
-  \usepackage{jlreq-trimmarks}% トンボあり
+  \usepackage[gray]{xcolor}  % 1色刷り
+  %\usepackage[cmyk]{xcolor} % カラー印刷
+  \usepackage{jlreq-trimmarks}% トンボ
 \else
-  \usepackage{xcolor}        % カラー
+  \usepackage{xcolor}        % RGBカラー
 \fi
 \usepackage{graphicx}        % includegraphics
 \usepackage[most]{tcolorbox} % コラムなど
@@ -40,14 +57,14 @@
 \usepackage{amsmath}         % align*
 \usepackage{listings}        % ソースコード
 \usepackage{tabularray}      % tblr環境
-\usepackage{tablefootnote}   % 表内で脚注
+\usepackage{tablefootnote}   % 表内で脚注(\tablefootnote)
 \usepackage{multicol}        % 指定箇所だけ段組
 \usepackage{wrapfig2}        % 図のまわりこみ
 \usepackage{wallpaper}       % 表紙用
 \usepackage{fontawesome7}    % アイコンフォント
 \usepackage{qrcode}          % QRコード画像生成
-\usepackage{eso-pic}         % 全ページに背景描画（隠しノンブル用）
-\usepackage{pageslts}        % 通しページ番号(隠しノンブル用だけど電子版でも必要)
+\usepackage{eso-pic}         % 背景描画(表紙、隠しノンブル)
+\usepackage{pageslts}        % 通しページ番号
 % PDF出力で \ref から \label にハイパーリンク/ \urlコマンド
 % けっこうな数のコマンドを上書き定義しているので最後に読みこむのが推奨らしい
 \usepackage[pdfusetitle]{hyperref}
@@ -305,7 +322,7 @@
     \draw[line width=0.5pt, rounded corners=1.5mm]
       (frame.south west) -- (frame.north west) -- (frame.north east) -- (frame.south east);
   },
-  underlay middle={ % 分割された途中のパーツ(使わない)
+  underlay middle={ % 分割された途中のパーツ
     \draw[line width=0.5pt] (frame.north west) -- (frame.south west);
     \draw[line width=0.5pt] (frame.north east) -- (frame.south east);
   },
@@ -318,8 +335,8 @@
 % framed package に含まれる snugshade, leftbar 環境に似せたもの(完全には同じではない)
 \DeclareTColorBox{snugshade}{}{
   breakable,
-  before upper={ % 本文直前に挿入されるコード
-    \setlength{\parindent}{1\zw}% 最初の段落で字下げする(デフォではされない)
+  before upper={
+    \setlength{\parindent}{1\zw}
   },
   width=\linewidth,
   top=2pt,bottom=2pt,left=2pt,right=2pt,
@@ -329,14 +346,14 @@
 }
 \DeclareTColorBox{leftbar}{}{
   breakable,
-  before upper={ % 本文直前に挿入されるコード
-    \setlength{\parindent}{1\zw}% 最初の段落で字下げする(デフォではされない)
+  before upper={
+    \setlength{\parindent}{1\zw}
   },
   width=\linewidth,
   top=2pt,bottom=2pt,left=8pt,right=2pt,
   colframe=white,
   colback=white,
-  boxrule=0pt,  arc=0pt,
+  boxrule=0pt, arc=0pt,
   enhanced,
   underlay={
     \draw[black, line width=2pt](frame.north west) -- (frame.south west);
@@ -364,17 +381,46 @@
 %  pdfsubject={pdf subject},% titleとは別っぽい
   pdflang=ja-JP,
   % 以下、hyperxmp
-%  keeppdfinfo,% メタ情報を dc:hoge だけでなくInfo dictにも出力する
 %  pdfcontactemail={mail@address},
 %  pdfcontacturl={https://example.com/},
   pdfversionid=\revid,
 %  pdfdate={1970-01-01},
+%  keeppdfinfo,% メタ情報を dc:hoge だけでなくInfo dictにも出力する
 }
 
 \begin{document}
-
 \frontmatter
-\maketitle
+\ifdefined\PRINT
+%  % 扉画像ページ(印刷版)
+%  % 印刷版PDFには表紙画像を含めず、本文とは別に入稿するのが基本
+%  % 表紙をめくったら1ページ目に扉としてモノクロ版の画像を入れるような場合には
+%  % コメントアウトされている部分を生かす
+%  \thispagestyle{empty} % emptyでも隠しノンブルは入る
+%  % トンボ(1in)と塗り足し幅(3mm)のぶんだけ位置がズレるので補正
+%  % 1inという値はjlreq-trimmarksのデフォルトが2in大きい用紙を使うことに由来
+%  % デフォルトから変更していたり、別の方法でトンボを作る場合には要修正
+%  \setlength{\wpXoffset}{22.4mm}  % 1in-3mm
+%  \setlength{\wpYoffset}{-28.4mm} % -1in-3mm
+%  % 画像は版面いっぱいではなく、塗り足し幅(3mm)の分拡大する
+%  % (A5幅148mm + 塗り足し幅3mm x 2) / 148mm = 1.041; B5なら(182+6)/182=1.033
+%  % 画像ファイルは縦横比1:1.414ではなく、154:216 (B5なら188:263)の比率で
+%  % グレースケール(またはCMYK)の高解像度のものを指定する
+%  % A5グレースケール600dpiドットバイドットなら3638x5102ピクセル
+%  \ThisCenterWallPaper{1.041}{cover/print.png}
+%  \null\clearpage
+\else
+  % 表紙(電子版)
+  % \ThisCenterWallPaper の最初の引数は版面の横幅に対する画像幅の比率
+  % 1なら版面にちょうどぴったり収まるよう画像サイズを調整する
+  % 縦横比は保持されるので、1:1.414 の比率の画像ファイルを指定すると
+  % 縦もぴったり版面に収まる
+  %\setcounter{page}{0} % 表紙画像をページ数に数えない場合
+  \thispagestyle{empty}
+  \ThisCenterWallPaper{1}{cover/cover.png}
+  \null% この\nullがないと表示されない
+  \clearpage
+\fi
+
 % 序文
 \include{intro}
 % 目次(subsectionまで)
@@ -390,5 +436,15 @@
 % あとがき・奥付
 \backmatter
 \include{outro}
+
+% 裏表紙
+%\ifdefined\PRINT
+%  % 印刷版では裏表紙は別ファイルとして入稿
+%\else
+%  % 電子版
+%  \thispagestyle{empty}
+%  \ThisCenterWallPaper{1}{cover/cover4.png}
+%  \null
+%\fi
 
 \end{document}

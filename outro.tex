@@ -29,14 +29,15 @@
 
 
 % 奥付は偶数ページに載せる
+% 以下のコメント部分を生かすと自動で判定されるが、手作業で調整してもいいんじゃないかな
 % (偶数ページなら改ページせず著者紹介の下のスペースに、奇数ページなら改ページ)
-\makeatletter
-\ifodd\c@CurrentPage
-  \clearpage\thispagestyle{empty}
-\fi
-\makeatother
-\null
-\vfill
+%\makeatletter
+%\ifodd\c@CurrentPage
+%  \clearpage\thispagestyle{empty}
+%\fi
+%\makeatother
+
+\null\vfill
 
 % 奥付本体
 \begin{center}

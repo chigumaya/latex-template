@@ -5,13 +5,13 @@ INCLUDE=	$(shell grep '\(\\includegraphics\|\\lstinputlisting\)' $(SRC) | sed -n
 LATEXMK= docker run --rm -v .:/workdir texlive/texlive:latest latexmk
 REVID=	$(shell git rev-parse --short main 2>/dev/null || echo xxxxxx)
 
-SUBDIRS= 
+SUBDIRS= cover
 
 main: $(SUBDIRS) main.pdf
 print: $(SUBDIRS) print.pdf
 all: $(SUBDIRS) $(TARGET)
-main.pdf: $(SRC) $(INCLUDE) revid.tex
-print.pdf: print.tex $(SRC) $(INCLUDE) revid.tex
+main.pdf: $(SRC) $(INCLUDE) revid.tex cover/cover.png
+print.pdf: print.tex $(SRC) $(INCLUDE) revid.tex cover/print.png
 
 revid.tex::
 	echo '\\def\\revid{$(REVID)}' > tmp.$@
