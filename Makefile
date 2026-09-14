@@ -1,5 +1,5 @@
 TARGET= main.pdf print.pdf
-SRC=	main.tex intro.tex chapter1.tex outro.tex
+SRC=	main.tex intro.tex readme.tex outro.tex
 INCLUDE=	$(shell grep '\(\\includegraphics\|\\lstinputlisting\)' $(SRC) | sed -n 's/.*{\(.*\)}.*/\1/p')
 
 LATEXMK= docker run --rm -v .:/workdir texlive/texlive:latest latexmk

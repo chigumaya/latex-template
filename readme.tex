@@ -35,18 +35,6 @@ LATEXMK= docker run --rm -v .:/workdir texlive/texlive:latest latexmk
 
 \verb`Makefile` をとくに修正していない場合、電子版(画面上での閲覧を想定したPDF)の \verb`main.pdf` を生成する。また、\verb`make all` ではそれに加えて印刷版(印刷所への入稿を想定したPDF)の \verb`print.pdf` を生成する。コンパイルのたびに両方生成するのは時間のムダなので、デフォルトではあえて片方だけ生成するようにしている。
 
-2種類のPDFを生成するが、電子版、印刷版どちらに対する変更も \verb`main.tex` に対しておこなう。\verb`print.tex` は電子版か印刷版かを区別するためのマクロを定義してから \verb`main.tex` を読み込むだけのファイルで、通常はとくに修正する必要はない。
-
-以下のように記述すると電子版、印刷版で処理を切り替えられる。
-
-\begin{lstlisting}
-\ifdefined\PRINT
-  % 印刷版の処理
-\else
-  % 電子版の処理
-\fi
-\end{lstlisting}
-
 \verb`make` の際、\verb`git` のコミットハッシュが記載された \verb`revid.tex` というファイルを自動で生成する。この値は \verb`\revid` というマクロで参照できる。本ドキュメントでは奥付で使用している。また、PDFのメタ情報にも埋め込んでいる。
 
 \begin{lstlisting}[style=tty]
@@ -59,11 +47,40 @@ LATEXMK= docker run --rm -v .:/workdir texlive/texlive:latest latexmk
       <xmpMM:VersionID>1eb445e</xmpMM:VersionID>
 \end{lstlisting}
 
+画像を読み込むための \verb`\includegraphics{}` とソースコードを読み込むための \verb`\lstinputlisting{}` で指定されているファイルは自動的に依存関係に追加されるので(\verb`Makefile` の \verb`INCLUDE=...` の行)、これらのファイルを修正すれば \verb`*.tex` を修正していなくても \verb`make` で再生成される。ただし、環境変数 \verb`$TEXINPUTS` で指定されたディレクトリまでは見ない。\verb`$TEXINPUTS` に頼らない書き方をするのがよい。
+
+\verb`make` が使えない環境(Windows や Overleaf のような Web 上のもの)は知らん。がんばって何とかしてくれ。
+
 \subsection{github workflow}
 
 \verb`main` または \verb`master` ブランチで github に push すると、github 上で \verb`make all` される。docker を使わずにコンパイルするように \verb`Makefile` の \verb`LATEXMK=...` の行を修正していた場合、github でのビルドがコケるので注意。
 
 自動コンパイルしたくない場合は \verb`.github/` 以下をまるごと削除すべし。
+
+\subsection{印刷版と電子版}
+
+前述のように \verb`make all` で2種類のPDFを生成する。主な違いは以下。
+
+\begin{itemize}
+\item 印刷版は見開き左右でページデザインが異なるが(twoside)、左右の概念がない電子版はどのページも同じデザイン(oneside)
+\item 電子版は1ページ目に表紙画像を挿入するが、印刷版では別ファイルでの入稿を想定して挿入しない
+\item 印刷版はグレースケール\footnote{ただし、カラー画像がグレースケールに変換されるわけではない}、電子版はRGBカラー
+\item 印刷版ではトンボと隠しノンブルを出力する
+\end{itemize}
+
+これ以外に電子版、印刷版で異なる処理をさせたい場合は、\verb`main.tex` で以下のように記述する。
+
+\begin{lstlisting}
+\ifdefined\PRINT
+  % 印刷版の処理
+\else
+  % 電子版の処理
+\fi
+\end{lstlisting}
+
+これは\ifdefined\PRINT 印刷版\else 電子版\fi のPDFである。
+
+\verb`print.tex` は電子版か印刷版かを区別するための \verb`\PRINT` マクロを定義してから \verb`main.tex` を読み込むだけのファイルで、通常はとくに修正する必要はない。
 
 \section{セクション}
 
@@ -91,15 +108,12 @@ LATEXMK= docker run --rm -v .:/workdir texlive/texlive:latest latexmk
 echo Hello, world!
 \end{lstlisting}
 
-実行するとこうなる。
+枠のないバージョン。
 
 \begin{lstlisting}[style=tty]
 $ sh hello.sh
 Hello, world!
 \end{lstlisting}
-
-
-以下は \verb`framed` パッケージで提供されていた環境を \verb`tcolorbox` でそれっぽく作ったもの。
 
 なんか引用文を入れるのによさそうな環境。えらい人曰く、
 
@@ -107,9 +121,26 @@ Hello, world!
 腹へった。
 \end{leftbar}
 
-用途不明だけどなんか枠。
+\subsection{フォント}
 
+\def\sampletext{\noindent%
+A quick brown fox jumps over the lazy dog. \\
+色は匂へど散りぬるを我が世誰ぞ常ならむ有為の奥山今日越えて浅き夢見し酔ひもせず \\
+0123456789
+}
+
+\textrm{\textbackslash{}rmfamily}
 \begin{snugshade}
-グレーの箱。
+\rmfamily\sampletext
+\end{snugshade}
+
+\textsf{\textbackslash{}sffamily}
+\begin{snugshade}
+\sffamily\sampletext
+\end{snugshade}
+
+\texttt{\textbackslash{}ttfamily}
+\begin{snugshade}
+\ttfamily\sampletext
 \end{snugshade}
 

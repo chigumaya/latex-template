@@ -45,35 +45,42 @@
 ]{luatexja-preset}
 \usepackage[match]{luatexja-fontspec}
 \ifdefined\PRINT
-  \usepackage[gray]{xcolor}  % 1色刷り
-  %\usepackage[cmyk]{xcolor} % カラー印刷
   \usepackage{jlreq-trimmarks}% トンボ
-\else
-  \usepackage{xcolor}        % RGBカラー
 \fi
 \usepackage{graphicx}        % includegraphics
 \usepackage[most]{tcolorbox} % コラムなど
 \usepackage{tikz}            % 描画
-\usepackage{amsmath}         % align*
 \usepackage{listings}        % ソースコード
 \usepackage{tabularray}      % tblr環境
-\usepackage{tablefootnote}   % 表内で脚注(\tablefootnote)
-\usepackage{multicol}        % 指定箇所だけ段組
-\usepackage{wrapfig2}        % 図のまわりこみ
 \usepackage{wallpaper}       % 表紙用
 \usepackage{fontawesome7}    % アイコンフォント
 \usepackage{qrcode}          % QRコード画像生成
 \usepackage{eso-pic}         % 背景描画(表紙、隠しノンブル)
 \usepackage{pageslts}        % 通しページ番号
+% よく使いそうなパッケージ
+%\usepackage{amsmath}        % align*
+%\usepackage{tablefootnote}  % 表内で脚注(\tablefootnote)
+%\usepackage{multicol}       % 指定箇所だけ段組
+%\usepackage{wrapfig2}       % 図のまわりこみ
 % PDF出力で \ref から \label にハイパーリンク/ \urlコマンド
 % けっこうな数のコマンドを上書き定義しているので最後に読みこむのが推奨らしい
 \usepackage[pdfusetitle]{hyperref}
 \usepackage{hyperxmp}        % PDFメタデータ埋め込み/ hyperref のさらに後
 
-% デフォの\sffamilyのフォントが日本語とマッチしてないので変更
+\ifdefined\PRINT
+  \selectcolormodel{gray}    % 1色刷り
+  %\selectcolormodel{cmyk}   % カラー印刷
+\else
+  \selectcolormodel{rgb}
+\fi
+
+% \sffamilyをHelvetica系に(デフォのLatin Modern Sansは原の味角ゴと合わない)
 \setsansfont{TeX Gyre Heros}
-% ttfamily のデフォは 0/O、1/l/I の区別がつきづらい
-%\setmonofont{DejaVu Sans Mono}
+% 0/O、1/l/I が区別しやすく、高さ:幅=2:1の等幅フォント
+\setmonofont{Inconsolatazi4}
+% 原の味角ゴregularはInconsolataに合わせるとウェイトが重めなのでLightに
+% ただ、Lightは軽すぎるような気もする。この中間ぐらいがほしい
+\setmonojfont{HaranoAjiGothic-Light}
 
 \ifdefined\PRINT
   % ページスタイル(jlreq専用) / 印刷版
@@ -429,9 +436,7 @@
 
 % 本文
 \mainmatter
-\include{chapter1}
-%\include{chapter2}
-%\include{chapter3}
+\include{readme}
 
 % あとがき・奥付
 \backmatter
