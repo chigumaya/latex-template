@@ -51,6 +51,33 @@ LATEXMK= docker run --rm -v .:/workdir texlive/texlive:latest latexmk
 
 \verb`make` が使えない環境(Windows や Overleaf のような Web 上のもの)は知らん。がんばって何とかしてくれ。
 
+\subsubsection{部分コンパイル}
+
+章ごとに別のファイルで原稿を書き、\verb`main.tex` から
+\begin{lstlisting}
+...
+\begin{document}
+...
+\mainmatter
+\include{chapter1}
+\include{chapter2}
+\include{chapter3}
+...
+\end{document}
+\end{lstlisting}
+のように \verb`\include{}` する。
+
+そして、\verb`ch2.tex` を以下の内容で用意する。
+
+\begin{lstlisting}
+\includeonly{chapter2}
+\input{main}
+\end{lstlisting}
+
+この状態で \verb`make ch2.pdf` を実行すると、\verb`chapter2.tex` だけが取り込まれたPDFが生成される。
+
+なお、\verb`\include{}` するとかならず改ページが挿入されること、\verb`\includeonly` は \verb`\input` には効かないことに注意。\verb`\section{}` では通常改ページされないのでセクションごとに \verb`\include{}` するのは避け、\verb`\chapter` ごとに分割するのがよい。短時間でコンパイルできるので、執筆中の確認に適している。
+
 \subsection{github workflow}
 
 \verb`main` または \verb`master` ブランチで github に push すると、github 上で \verb`make all` される。docker を使わずにコンパイルするように \verb`Makefile` の \verb`LATEXMK=...` の行を修正していた場合、github でのビルドがコケるので注意。
