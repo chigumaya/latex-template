@@ -7,11 +7,11 @@ REVID=	$(shell git rev-parse --short main 2>/dev/null || echo xxxxxx)
 
 SUBDIRS= cover
 
-main: main.pdf
-print: print.pdf
-all: $(TARGET)
-main.pdf:  $(SUBDIRS) $(SRC)           $(INCLUDE) revid.tex cover/cover.png
-print.pdf: $(SUBDIRS) $(SRC) print.tex $(INCLUDE) revid.tex cover/print.png
+main: $(SUBDIRS) main.pdf
+print: $(SUBDIRS) print.pdf
+all: $(SUBDIRS) $(TARGET)
+main.pdf:  $(SRC)           $(INCLUDE) revid.tex cover/cover.png
+print.pdf: $(SRC) print.tex $(INCLUDE) revid.tex cover/print.png
 
 revid.tex::
 	echo '\\def\\revid{$(REVID)}' > tmp.$@

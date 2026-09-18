@@ -16,23 +16,23 @@
 % 最新の方法では \DocumentMetadata{pdfversion=1.6, pdfstandard=X-4,} と
 % するようだが、jlreq との組み合わせではエラーになる
 
-\input{revid}
-
 % PDFに日付などの情報を埋め込まない = コンパイルするたびに同じPDFが出力される
 % これだけでなく、hyperxmp パッケージも無効化するか、または環境変数SOURCE_DATE_EPOCHで
 % 適当な時刻(epochからの経過秒)も合わせて指定する必要がある
 % 32(CreationDate)+64(ModDate)+512(trailer ID)=608
 %\pdfvariable suppressoptionalinfo 608
 
+\input{revid}
+
 \ifdefined\PRINT
   \documentclass[book,
-    fontsize=9pt, paper=a5paper, line_length=37zw, openany,
+    fontsize=9pt, paper=a5paper, line_length=37zw, openany, hanging_punctuation,
     twoside, gutter=22mm,% 印刷版: 両面、ノド側余白大きめ
   ]{jlreq}
 \else
   \documentclass[book,
-    fontsize=9pt, paper=a5paper, line_length=37zw, openany,
-    oneside, % 電子版: 片面
+    fontsize=9pt, paper=a5paper, line_length=37zw, openany, hanging_punctuation,
+    oneside,% 電子版: 片面
   ]{jlreq}
 \fi
 
@@ -159,19 +159,20 @@
   \AddToShipoutPictureFG{%
     \begingroup
     \ttfamily\fontsize{6pt}{6pt}\selectfont
+    \setlength{\fboxsep}{0.5pt}
     \ifodd\value{page}% 奇数ページ(右ページ)
       \put(
         \ptlen\dimexpr 1in+1mm\relax,% ノド(左)から1mm内側
         \ptlen\dimexpr 1in+\paperheight/4\relax% 高さ中央(なぜ/2ではなく/4なのかわからん)
       ){% 背景に濃色の画像がある場合でもノンブルが読めるように数字の背景を白く塗り潰す
-        {\setlength{\fboxsep}{0.5pt}\colorbox{white}{\verticaltext[3pt]{\theCurrentPage}}}%
+        \colorbox{white}{\verticaltext[3pt]{\theCurrentPage}}%
       }%
     \else% 偶数ページ(左ページ)
       \put(
-        \ptlen\dimexpr 1in+\paperwidth-1mm-1.4mm\relax,% ノド(右)から1mm+ノンブル幅(雑に1.4mmぐらい)内側
+        \ptlen\dimexpr 1in+\paperwidth-1mm-3pt\relax,% ノド(右)から1mm+ノンブル幅だけ内側
         \ptlen\dimexpr 1in+\paperheight/4\relax% 高さ中央
       ){%
-        {\setlength{\fboxsep}{0.5pt}\colorbox{white}{\verticaltext[3pt]{\theCurrentPage}}}%
+        \colorbox{white}{\verticaltext[3pt]{\theCurrentPage}}%
       }%
     \fi
     \endgroup
@@ -212,7 +213,6 @@
   },%
 }
 % section; L字
-\definecolor{sectionbar}{gray}{0.30}
 \ModifyHeading{section}{
   font={\sffamily\bfseries\Large},
   label_format={\thesection},
@@ -226,11 +226,11 @@
     \begin{picture}(0,0)
       \put(0,-5){%
         \begin{tikzpicture}
-          \fill[sectionbar] (0pt,0pt) rectangle (5pt,19pt);
+          \fill[darkgray] (0pt,0pt) rectangle (5pt,19pt);
         \end{tikzpicture}
       }
       \put(0,-5){%
-        \color{sectionbar}
+        \color{darkgray}
         \line(1,0){\dimexpr\hsize\relax}
       }
     \end{picture}%
@@ -250,7 +250,7 @@
   format={%
     \noindent #1#2\par\nobreak
     \vskip2pt
-    {\color{sectionbar}\hrule height 0.6pt depth0pt width\hsize}%
+    {\color{darkgray}\hrule height 0.6pt depth0pt width\hsize}%
   }%
 }
 % subsubsection; 番号のかわりにアイコンを付加
