@@ -14,7 +14,7 @@ Lua\LaTeX + jlreq が必要。\TeX Live で動くはず。
 
 docker で構築するのが楽ちん。
 
-\begin{lstlisting}[style=tty]
+\begin{lstlisting}[style=simple]
 % docker pull texlive/texlive:latest
 \end{lstlisting}
 
@@ -37,7 +37,7 @@ LATEXMK= docker run --rm -v .:/workdir texlive/texlive:latest latexmk
 
 \verb`make` の際、\verb`git` のコミットハッシュが記載された \verb`revid.tex` というファイルを自動で生成する。この値は \verb`\revid` というマクロで参照できる。本ドキュメントでは奥付で使用している。また、PDFのメタ情報にも埋め込んでいる。
 
-\begin{lstlisting}[style=tty]
+\begin{lstlisting}[style=simple]
 % git rev-parse --short main
 1eb445e
 % cat revid.tex
@@ -78,13 +78,15 @@ LATEXMK= docker run --rm -v .:/workdir texlive/texlive:latest latexmk
 
 なお、\verb`\include{}` するとかならず改ページが挿入されること、\verb`\includeonly` は \verb`\input` には効かないことに注意。\verb`\section{}` では通常改ページされないのでセクションごとに \verb`\include{}` するのは避け、\verb`\chapter` ごとに分割するのがよい。短時間でコンパイルできるので、執筆中の確認に適している。
 
-\subsection{github workflow}
+\section{github workflow}
 
-\verb`main` または \verb`master` ブランチで github に push すると、github 上で \verb`make all` される。docker を使わずにコンパイルするように \verb`Makefile` の \verb`LATEXMK=...` の行を修正していた場合、github でのビルドがコケるので注意。
+\verb`main` または \verb`master` ブランチで github に push すると、github 上で \verb`make all` されるよう github workflow の設定が含まれている。
+
+docker を使わずにコンパイルするように \verb`Makefile` の \verb`LATEXMK=...` の行を修正していた場合、github でのビルドがコケるので注意。
 
 自動コンパイルしたくない場合は \verb`.github/` 以下をまるごと削除すべし。
 
-\subsection{印刷版と電子版}
+\section{印刷版と電子版}
 
 前述のように \verb`make all` で2種類のPDFを生成する。主な違いは以下。
 
@@ -109,17 +111,23 @@ LATEXMK= docker run --rm -v .:/workdir texlive/texlive:latest latexmk
 
 \verb`print.tex` は電子版か印刷版かを区別するための \verb`\PRINT` マクロを定義してから \verb`main.tex` を読み込むだけのファイルで、通常はとくに修正する必要はない。
 
-\section{セクション}
+
+\chapter{デモ}
 
 ここからは見た目を確認するためのデモ。
 
-\subsection{サブセクション}
+\section{セクション}
 
 びよーん。
 
-\subsubsection{サブサブセクション}
+
+\subsection{サブセクション}
 
 ぱおーん。
+
+\subsubsection{サブサブセクション}
+
+どよーん。
 
 \begin{column}{コラムタイトル}
 
@@ -137,7 +145,7 @@ echo Hello, world!
 
 枠のないバージョン。
 
-\begin{lstlisting}[style=tty]
+\begin{lstlisting}[style=simple]
 $ sh hello.sh
 Hello, world!
 \end{lstlisting}
@@ -152,7 +160,7 @@ Hello, world!
 
 \def\sampletext{\noindent%
 A quick brown fox jumps over the lazy dog. \\
-色は匂へど散りぬるを我が世誰ぞ常ならむ有為の奥山今日越えて浅き夢見し酔ひもせず \\
+色は匂へど散りぬるを我が世誰ぞ常ならむ有為の奥山今日越えて浅き夢見し酔ひもせず\\
 0123456789
 }
 
@@ -166,8 +174,7 @@ A quick brown fox jumps over the lazy dog. \\
 \sffamily\sampletext
 \end{snugshade}
 
-\texttt{\textbackslash{}ttfamily}
+\texttt{\textbackslash{}ttfamily} は 1em=0.5zw なので和英混在でも文字がズレない。
 \begin{snugshade}
 \ttfamily\sampletext
 \end{snugshade}
-

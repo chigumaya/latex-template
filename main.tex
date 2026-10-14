@@ -14,11 +14,11 @@
 %  }
 %\fi
 % 最新の方法では \DocumentMetadata{pdfversion=1.6, pdfstandard=X-4,} と
-% するようだが、jlreq との組み合わせではエラーになる
+% するようだが、jlreq との組み合わせではエラーになるっぽい？
 
 % PDFに日付などの情報を埋め込まない = コンパイルするたびに同じPDFが出力される
-% これだけでなく、hyperxmp パッケージも無効化するか、または環境変数SOURCE_DATE_EPOCHで
-% 適当な時刻(epochからの経過秒)も合わせて指定する必要がある
+% これに加えて、環境変数SOURCE_DATE_EPOCHで適当な時刻(epochからの経過秒)も
+% 合わせて指定するか、hyperxmp パッケージの無効化のどちらかが必要がある
 % 32(CreationDate)+64(ModDate)+512(trailer ID)=608
 %\pdfvariable suppressoptionalinfo 608
 
@@ -26,12 +26,12 @@
 
 \ifdefined\PRINT
   \documentclass[book,
-    fontsize=9pt, paper=a5paper, line_length=37zw, openany, hanging_punctuation,
+    fontsize=9pt, paper=a5paper, openany, hanging_punctuation,
     twoside, gutter=22mm,% 印刷版: 両面、ノド側余白大きめ
   ]{jlreq}
 \else
   \documentclass[book,
-    fontsize=9pt, paper=a5paper, line_length=37zw, openany, hanging_punctuation,
+    fontsize=9pt, paper=a5paper, openany, hanging_punctuation,
     oneside,% 電子版: 片面
   ]{jlreq}
 \fi
@@ -82,12 +82,17 @@
 % ただ、Lightは軽すぎるような気もする。この中間ぐらいがほしい
 \setmonojfont{HaranoAjiGothic-Light}
 
+% ノンブル用フォント
+\newfontfamily{\nombrefamily}{TeX Gyre Heros}% 本文用sans-serifと同じ
+%\newfontfamily{\nombrefamily}{Asana-Math}[Numbers=OldStyle]%古風な数字フォント; 文芸書にはいいけど技術書には合わんかも
+
+% ページスタイル(jlreq専用) 
 \ifdefined\PRINT
-  % ページスタイル(jlreq専用) / 印刷版
+  % 印刷版
   % 柱、ノンブルあり
   \NewPageStyle{body}{
     nombre_position=bottom-fore-edge, % ノンブル位置: 小口側下部
-    nombre_font=\sffamily,
+    nombre_font=\nombrefamily,
     running_head_position=top-fore-edge,% 柱位置: 小口側上部
     even_running_head={_chapter},  % 柱/左
     odd_running_head={_section},   % 柱/右
@@ -96,21 +101,21 @@
   % ノンブルのみ、柱なし
   \NewPageStyle{frontbackmatter}{
     nombre_position=bottom-fore-edge,
-    nombre_font=\sffamily,
+    nombre_font=\nombrefamily,
   }
 \else
-  % ページスタイル(jlreq専用) / 電子版
+  % 電子版
   % 柱、ノンブルあり
   \NewPageStyle{body}{
-    nombre_position=bottom-center,% 下部中央
-    nombre_font=\sffamily,
+    nombre_position=bottom-center, % 下部中央
+    nombre_font=\nombrefamily,
     odd_running_head={_chapter},% 柱: onesideではoddのみ有効っぽい
     mark_format={_chapter={第\thechapter 章\quad #1}}
   }
   % ノンブルのみ、柱なし
   \NewPageStyle{frontbackmatter}{
     nombre_position=bottom-center,
-    nombre_font=\sffamily,
+    nombre_font=\nombrefamily,
   }
 \fi
 % 本文ページスタイル(jlreqsetupで設定しても効かない？)
@@ -150,7 +155,7 @@
 % ノド側(奇数ページは左、偶数ページは右）のページ端中央に配置
 % 横組専用(縦組では左右が入れ替わるので位置調整が必要)
 % 版面が用紙原点から1インチ内側に配置される前提(jlreq-trimmarksのデフォルト)
-% jlreq-trimmmarksのオプションを変更したり、別の方法でトンボを出力したりするとズレる
+% jlreq-trimmarksのオプションを変更したり、別の方法でトンボを出力したりするとズレる
 % pagestyleとは独立しているので \thispagestyle{empty} でも出力される
 % なんでこんな基本的なものを自前で実装せにゃならんのだ…
 \ifdefined\PRINT
@@ -246,11 +251,15 @@
   after_label_space=1em,
   second_heading_text_indent=0pt,
   lines=2,
-  after_space=8pt,
   format={%
-    \noindent #1#2\par\nobreak
-    \vskip2pt
-    {\color{darkgray}\hrule height 0.6pt depth0pt width\hsize}%
+    \noindent
+    \begin{picture}(0,0)
+      \put(0,-5){%
+        \color{darkgray}
+        \line(1,0){\dimexpr\hsize\relax}
+      }
+    \end{picture}%
+    #1#2%
   }%
 }
 % subsubsection; 番号のかわりにアイコンを付加
@@ -268,35 +277,32 @@
 \renewcommand{\figurename}{\textcolor{gray}{▲} 図}
 \renewcommand{\lstlistingname}{\textcolor{gray}{▼} リスト}
 
-% ソースコード
+% ソースコード(装飾あり)
 \lstset{
 %  language = bash,		% 言語
-  backgroundcolor={\color[gray]{.90}},	%背景色と透過度
-  breaklines = true,		%枠外に行った時の自動改行
-  breakindent = 0pt,		%自動改行後のインデント量(デフォルトでは20[pt])	
-  %basicstyle = \ttfamily\footnotesize,		% 標準の書体
-  basicstyle = \ttfamily\small,		% 標準の書体
-  %commentstyle = {\itshape \color[cmyk]{1,0.4,1,0}},	%コメントの書体
-  %commentstyle = \ttfamily,
-  classoffset = 0,		%関数名等の色の設定
-  %keywordstyle = {\bfseries \color[cmyk]{0,1,0,0}},	%キーワード(int, ifなど)の書体
-  %keywordstyle = {\bfseries},
+  backgroundcolor={\color[gray]{.90}},	% 背景色と透過度
+  breaklines = true,		% 自動改行
+  breakindent = 0pt,		% 自動改行後のインデント量
+  basicstyle = \ttfamily\small,	% 標準の書体
+  %commentstyle = \ttfamily,    % コメントの書体
+  classoffset = 0,		% 関数名等の色の設定
+  %keywordstyle = {\bfseries},	% キーワード(int, ifなど)の書体
   stringstyle = \ttfamily,
   showstringspaces=false,
-  frame = tBRl,	%枠 "t"は上に線を記載, "T"は上に二重線を記載
+  frame = tBRl,	%枠; 小文字は線1本、大文字は二重線
 		%他オプション：leftline，topline，bottomline，lines，single，shadowbox
-  framesep = 5pt,	%枠と内部の文字の間隔
-  numbers = left,	%行番号の位置
-  numbersep = 9pt,     %枠と行番号の間隔
-  stepnumber = 1,	%行番号の間隔
-  numberstyle = \tiny,	%行番号の書体
-  tabsize = 8,		%タブの大きさ
-  basewidth = 0.5em,	%字送り
-  captionpos = t	%キャプションの場所("tb"ならば上下両方に記載)
+  framesep = 5pt,	% 枠と内部の文字の間隔
+  numbers = left,	% 行番号の位置
+  numbersep = 9pt,	% 枠と行番号の間隔
+  stepnumber = 1,	% 行番号の間隔
+  numberstyle = \tiny,	% 行番号の書体
+  tabsize = 8,		% タブの大きさ
+  basewidth = 0.5em,	% 字送り
+  captionpos = t	% キャプションの場所("tb"ならば上下両方に記載)
 }
 
-% 実行結果表示用(上の設定からの差分のみ)
-\lstdefinestyle{tty}{
+% 装飾なし(上の設定からの差分のみ)
+\lstdefinestyle{simple}{
   basicstyle = \ttfamily\footnotesize,
   frame= {},
   framesep = 3pt,
@@ -315,7 +321,7 @@
   before={ % 箱の直前に挿入されるコード
     \vspace{\baselineskip}
     \phantomsection% hyperrefの被リンク用ダミーセクションを作る
-    \addcontentsline{toc}{section}{\numberline{\faIcon[regular]{comment-dots}}#1}%目次に載せる
+    \addcontentsline{toc}{subsection}{\numberline{\faIcon[regular]{comment-dots}}#1}%目次に載せる
   },
   colframe=columnframe, % 上の方で\definecolor した色
   boxrule=0.5pt,
@@ -372,9 +378,12 @@
 % mpfootnote は minipage 環境用のカウンタらしい
 \renewcommand{\thempfootnote}{\fnsymbol{mpfootnote})}
 
+
+% 以下、文書ごとに適宜変更する
+
 \title{かっこいいタイトル}
 \author{何野誰某}
-\date{YYYY/MM/DD}
+\date{YYYY/MM/DD} % 使われない
 
 % その他の hyperref 設定
 \hypersetup{
@@ -384,7 +393,7 @@
   bookmarks=true, % 見出し
   bookmarksdepth=2,  % デフォではtocdepthと同じ値だけどいちおう
   hidelinks, % リンクに色・枠をつけない
-%  pdfkeywords={key, word},
+%  pdfkeywords={keyword1, keyword2},
 %  pdfsubject={pdf subject},% titleとは別っぽい
   pdflang=ja-JP,
   % 以下、hyperxmp
